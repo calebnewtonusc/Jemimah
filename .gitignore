@@ -4,3 +4,8 @@ dist
 .env.local
 .DS_Store
 *.log
+
+# Agent / harness — not for the deploy
+.claude/
+.mcp.json
+CLAUDE.md

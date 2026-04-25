@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 800" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="g" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="#dfe9e0"/>
+      <stop offset="60%" stop-color="#a9bdaf"/>
+      <stop offset="100%" stop-color="#6e8a78"/>
+    </linearGradient>
+    <radialGradient id="h" cx="50%" cy="35%" r="40%">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.55)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+    </radialGradient>
+  </defs>
+  <rect width="600" height="800" fill="url(#g)"/>
+  <rect width="600" height="800" fill="url(#h)"/>
+  <g fill="rgba(255,255,255,0.7)" font-family="-apple-system,Segoe UI,Helvetica,sans-serif" text-anchor="middle">
+    <text x="300" y="410" font-size="46" font-weight="300" letter-spacing="2">Portrait placeholder</text>
+    <text x="300" y="450" font-size="18" font-weight="400" opacity="0.85">Replace with your own photo</text>
+  </g>
+</svg>

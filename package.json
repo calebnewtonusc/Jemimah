@@ -1,20 +1,22 @@
 {
   "name": "jemimah",
   "version": "1.0.0",
-  "description": "A small, polished single-page web app — Railway-ready.",
+  "description": "Jemimah's iPad-style personal website — Railway-ready.",
   "type": "module",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "start": "node server/index.js",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
     "express": "^4.19.2",
+    "framer-motion": "^11.3.19",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

@@ -1,7 +1,15 @@
-import { useEffect, useState } from "react";
-import { Logo } from "./Logo";
+import { useEffect, useRef, useState } from "react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import IPadFrame from "./components/ipad/IPadFrame";
+import HomeScreen from "./components/ipad/HomeScreen";
+import StatusBar from "./components/ipad/StatusBar";
+import DynamicIsland from "./components/ipad/DynamicIsland";
+import AppWindow from "./components/apps/AppWindow";
+import type { AppId } from "./data/content";
+import { ContentProvider, useContent } from "./data/ContentContext";
 
 type Theme = "light" | "dark";
+type Orientation = "landscape" | "portrait";
 
 function getInitialTheme(): Theme {
   if (typeof window === "undefined") return "light";
@@ -10,58 +18,32 @@ function getInitialTheme(): Theme {
     : "light";
 }
 
-const NOTES = [
-  {
-    title: "On slowness",
-    body: "Some work asks to be hurried; the better part of it does not. Jemimah is for the latter — the kind that gets stronger when given a little more time than it seems to need.",
-  },
-  {
-    title: "On revision",
-    body: "First drafts arrive in a rush. Second drafts are quieter. Third drafts often look like the first one, but with the noise removed. Most of the work is the removing.",
-  },
-  {
-    title: "On keeping",
-    body: "A small notebook outlives a large hard drive. Write the thing down. Reread it later. The ones worth keeping will tell you so by being still alive when you return.",
-  },
-];
-
-const ThemeIcon = ({ theme }: { theme: Theme }) =>
-  theme === "dark" ? (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <circle cx="12" cy="12" r="4" />
-      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-    </svg>
-  ) : (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" />
-    </svg>
-  );
-
-export default function App() {
+function IPadDesk() {
+  const { profile } = useContent();
+  const [orientation, setOrientation] = useState<Orientation>("landscape");
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [openApp, setOpenApp] = useState<AppId | null>(null);
+  const [locked, setLocked] = useState(true);
+  const [screenOff, setScreenOff] = useState(false);
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-  }, [theme]);
+    document.documentElement.dataset.orientation = orientation;
+  }, [theme, orientation]);
 
-  // Follow system theme changes when the user hasn't explicitly toggled.
-  // We always reflect the user's last in-session choice without persistence.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as Partial<{
+        theme: Theme;
+        orientation: Orientation;
+      }>;
+      if (detail?.theme) setTheme(detail.theme);
+      if (detail?.orientation) setOrientation(detail.orientation);
+    };
+    window.addEventListener("appearance-change", handler);
+    return () => window.removeEventListener("appearance-change", handler);
+  }, []);
+
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) =>
@@ -70,123 +52,216 @@ export default function App() {
     return () => mq.removeEventListener("change", handler);
   }, []);
 
-  const toggleTheme = () =>
-    setTheme((t) => (t === "dark" ? "light" : "dark"));
+  // 3D drag-to-rotate on the iPad chassis
+  const rotX = useMotionValue(0);
+  const rotY = useMotionValue(0);
+  const springX = useSpring(rotX, { stiffness: 260, damping: 28 });
+  const springY = useSpring(rotY, { stiffness: 260, damping: 28 });
+  const dragRef = useRef({
+    active: false,
+    startX: 0,
+    startY: 0,
+    rx: 0,
+    ry: 0,
+  });
+  const [isDragging, setIsDragging] = useState(false);
+
+  const xform = useTransform(
+    [springX, springY] as never,
+    ([x, y]: number[]) =>
+      `perspective(1400px) rotateX(${x}deg) rotateY(${y}deg)`,
+  );
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (
+      e.target instanceof HTMLElement &&
+      e.target.closest(".ipad-screen-area")
+    )
+      return;
+    dragRef.current = {
+      active: true,
+      startX: e.clientX,
+      startY: e.clientY,
+      rx: rotX.get(),
+      ry: rotY.get(),
+    };
+    setIsDragging(true);
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current.active) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    rotX.set(Math.max(-22, Math.min(22, dragRef.current.rx - dy * 0.18)));
+    rotY.set(Math.max(-22, Math.min(22, dragRef.current.ry + dx * 0.18)));
+  };
+  const onPointerUp = () => {
+    dragRef.current.active = false;
+    setIsDragging(false);
+    rotX.set(0);
+    rotY.set(0);
+  };
+
+  const wrapperBg =
+    theme === "dark"
+      ? "radial-gradient(ellipse at 30% 30%, rgba(60,80,70,0.35), transparent 55%), radial-gradient(ellipse at 70% 70%, rgba(40,60,50,0.3), transparent 50%), linear-gradient(160deg, #06090707 0%, #0c1410 35%, #090e0b 100%)"
+      : "radial-gradient(ellipse at 30% 30%, rgba(190,210,200,0.7), transparent 55%), radial-gradient(ellipse at 70% 70%, rgba(170,200,185,0.65), transparent 50%), linear-gradient(160deg, #f5f7f3 0%, #e5ece4 35%, #d8e1d6 100%)";
+
+  const labelGrad =
+    theme === "dark"
+      ? "linear-gradient(160deg, #ffffff 0%, #d4e8d4 55%, #a8cca8 100%)"
+      : "linear-gradient(160deg, #2c3a32 0%, #4a6b58 55%, #7a9a85 100%)";
 
   return (
-    <div className="shell">
-      <header className="site-header" role="banner">
-        <div className="container">
-          <a href="#top" className="brand" aria-label="Jemimah, home">
-            <Logo className="brand-mark" />
-            <span>Jemimah</span>
-          </a>
-          <nav className="nav" aria-label="Primary">
-            <a href="#notes">Notes</a>
-            <a href="#about">About</a>
-            <button
-              type="button"
-              className="theme-toggle"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-              aria-pressed={theme === "dark"}
-            >
-              <ThemeIcon theme={theme} />
-            </button>
-          </nav>
-        </div>
-      </header>
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        overflow: "hidden",
+        background: wrapperBg,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* Side labels: "<Name>'s" left, "iPad" right */}
+      <div
+        style={{
+          position: "fixed",
+          left: 12,
+          top: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          fontSize: "clamp(3rem, 9vh, 8rem)",
+          fontWeight: 900,
+          background: labelGrad,
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+          letterSpacing: "-0.04em",
+          writingMode: "vertical-rl",
+          transform: "rotate(180deg)",
+          padding: "1.5rem 0",
+          lineHeight: 1,
+          pointerEvents: "none",
+          userSelect: "none",
+          zIndex: 1,
+        }}
+      >
+        {profile.name}'s
+      </div>
+      <div
+        style={{
+          position: "fixed",
+          right: 12,
+          top: 0,
+          bottom: 0,
+          display: "flex",
+          alignItems: "center",
+          fontSize: "clamp(3rem, 9vh, 8rem)",
+          fontWeight: 900,
+          background: labelGrad,
+          WebkitBackgroundClip: "text",
+          backgroundClip: "text",
+          color: "transparent",
+          letterSpacing: "-0.04em",
+          writingMode: "vertical-rl",
+          padding: "1.5rem 0",
+          lineHeight: 1,
+          pointerEvents: "none",
+          userSelect: "none",
+          zIndex: 1,
+        }}
+      >
+        iPad
+      </div>
 
-      <main id="top">
-        <section className="hero" aria-labelledby="hero-title">
-          <div className="container">
-            <p className="eyebrow reveal">A small, considered space</p>
-            <h1 id="hero-title" className="reveal" data-delay="1">
-              For slow ideas <br />
-              and <em>quiet craft.</em>
-            </h1>
-            <p className="lede reveal" data-delay="2">
-              Jemimah is a place to keep the things worth keeping — fragments,
-              first drafts, late-night notes, and the patient work of returning
-              to them. No feed, no streaks, no audience.
-            </p>
-            <div className="cta-row reveal" data-delay="3">
-              <a className="btn btn-primary" href="#notes">
-                Read the notes
-              </a>
-              <a className="btn btn-ghost" href="#about">
-                What this is
-              </a>
-            </div>
+      <motion.div
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        style={{
+          transform: xform,
+          transformStyle: "preserve-3d",
+          touchAction: "none",
+          cursor: isDragging ? "grabbing" : "grab",
+        }}
+      >
+        <IPadFrame
+          orientation={orientation}
+          onPowerPress={() => setScreenOff((v) => !v)}
+        >
+          <div
+            className="ipad-screen-area"
+            style={{ width: "100%", height: "100%", position: "relative" }}
+          >
+            {screenOff ? (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  background: "#0a0a0c",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: "rgba(255,255,255,0.35)",
+                  fontSize: 13,
+                  cursor: "pointer",
+                }}
+                onClick={() => setScreenOff(false)}
+              >
+                tap to wake
+              </div>
+            ) : (
+              <>
+                <StatusBar
+                  orientation={orientation}
+                  inverted={openApp != null}
+                />
+                <DynamicIsland />
+                <HomeScreen
+                  orientation={orientation}
+                  onOpenApp={(id) => setOpenApp(id)}
+                  locked={locked}
+                  onUnlock={() => setLocked(false)}
+                />
+                <AppWindow appId={openApp} onClose={() => setOpenApp(null)} />
+              </>
+            )}
           </div>
-        </section>
+        </IPadFrame>
+      </motion.div>
 
-        <section id="notes" aria-labelledby="notes-title">
-          <div className="container">
-            <header className="section-head">
-              <h2 id="notes-title">Three short notes</h2>
-              <span className="section-meta">№ 001 — 003</span>
-            </header>
-            <ol className="notes" aria-label="Notes">
-              {NOTES.map((n, i) => (
-                <li className="note" key={n.title}>
-                  <span className="index">
-                    №&nbsp;{String(i + 1).padStart(3, "0")}
-                  </span>
-                  <h3>{n.title}</h3>
-                  <p>{n.body}</p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        <section className="quote" aria-label="A line worth keeping">
-          <div className="container">
-            <blockquote>
-              “The work is to keep the small flame lit, and to walk by its
-              light, and to write down what it shows you.”
-            </blockquote>
-            <cite>From the journal — March</cite>
-          </div>
-        </section>
-
-        <section id="about" aria-labelledby="about-title">
-          <div className="container">
-            <header className="section-head">
-              <h2 id="about-title">About Jemimah</h2>
-              <span className="section-meta">A note from the maker</span>
-            </header>
-            <p
-              style={{
-                color: "var(--ink-soft)",
-                maxWidth: "38rem",
-                fontSize: "1.05rem",
-                lineHeight: 1.7,
-              }}
-            >
-              Jemimah is a quiet single-page companion — a small home for
-              writing that resists the pull toward immediacy. It is named for
-              the word that means dove: a thing that goes out, looks for land,
-              and comes back. There is no account to make, nothing to install,
-              no notification that will ever arrive. Open it when there is
-              time. Close it when there isn’t.
-            </p>
-          </div>
-        </section>
-      </main>
-
-      <footer className="site-footer" role="contentinfo">
-        <div className="container">
-          <span>© Jemimah — kept by hand.</span>
-          <span>
-            Built with care.{" "}
-            <a href="#top" aria-label="Back to top">
-              Back to top ↑
-            </a>
-          </span>
-        </div>
-      </footer>
+      <div
+        style={{
+          position: "fixed",
+          bottom: 12,
+          left: "50%",
+          transform: "translateX(-50%)",
+          fontSize: 11,
+          color: theme === "dark" ? "rgba(255,255,255,0.6)" : "rgba(0,0,0,0.55)",
+          background:
+            theme === "dark" ? "rgba(0,0,0,0.35)" : "rgba(255,255,255,0.55)",
+          padding: "5px 10px",
+          borderRadius: 999,
+          letterSpacing: 0.3,
+          pointerEvents: "none",
+          zIndex: 5,
+        }}
+      >
+        Drag the frame to tilt · Press the side button to sleep · Open Settings
+        to edit
+      </div>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <ContentProvider>
+      <IPadDesk />
+    </ContentProvider>
   );
 }
