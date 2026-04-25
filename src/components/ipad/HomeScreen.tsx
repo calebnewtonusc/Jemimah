@@ -122,7 +122,9 @@ function AppIcon({
           background:
             app.id === "calendar"
               ? "transparent"
-              : `linear-gradient(145deg, ${app.gradient[0]}, ${app.gradient[1]})`,
+              : app.icon
+                ? "rgba(255,255,255,0.12)"
+                : `linear-gradient(145deg, ${app.gradient[0]}, ${app.gradient[1]})`,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -136,6 +138,18 @@ function AppIcon({
       >
         {app.id === "calendar" ? (
           <LiveCalendarIcon size={size} />
+        ) : app.icon ? (
+          <img
+            src={app.icon}
+            alt={app.name}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+              transform: app.id === "settings" ? "scale(1.05)" : undefined,
+            }}
+          />
         ) : (
           <span
             style={{
@@ -146,7 +160,7 @@ function AppIcon({
               textShadow: "0 1px 2px rgba(0,0,0,0.2)",
             }}
           >
-            {app.glyph ?? app.name.charAt(0)}
+            {app.name.charAt(0)}
           </span>
         )}
       </div>

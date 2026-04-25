@@ -3,16 +3,15 @@ import type { ReactNode } from "react";
 import type { AppId } from "../../data/content";
 import { apps } from "../../data/content";
 
-import AboutApp from "./AboutApp";
-import EducationApp from "./EducationApp";
-import WorkApp from "./WorkApp";
-import SkillsApp from "./SkillsApp";
-import PhotosApp from "./PhotosApp";
-import MusicApp from "./MusicApp";
-import FilesApp from "./FilesApp";
-import NotesApp from "./NotesApp";
-import ContactApp from "./ContactApp";
 import SettingsApp from "./SettingsApp";
+import WorkApp from "./WorkApp";
+import ProjectsApp from "./ProjectsApp";
+import EducationApp from "./EducationApp";
+import FilesApp from "./FilesApp";
+import PhotosApp from "./PhotosApp";
+import ContactApp from "./ContactApp";
+import SpotifyApp from "./SpotifyApp";
+import BibleApp from "./BibleApp";
 import JemimahGPTApp from "./JemimahGPTApp";
 
 interface Props {
@@ -21,16 +20,15 @@ interface Props {
 }
 
 const appMap: Partial<Record<AppId, () => ReactNode>> = {
-  about: () => <AboutApp />,
-  education: () => <EducationApp />,
-  work: () => <WorkApp />,
-  skills: () => <SkillsApp />,
-  photos: () => <PhotosApp />,
-  music: () => <MusicApp />,
-  files: () => <FilesApp />,
-  notes: () => <NotesApp />,
-  contact: () => <ContactApp />,
   settings: () => <SettingsApp />,
+  work: () => <WorkApp />,
+  projects: () => <ProjectsApp />,
+  education: () => <EducationApp />,
+  files: () => <FilesApp />,
+  photos: () => <PhotosApp />,
+  contact: () => <ContactApp />,
+  spotify: () => <SpotifyApp />,
+  bible: () => <BibleApp />,
   jemimahgpt: () => <JemimahGPTApp />,
 };
 
@@ -79,7 +77,10 @@ export default function AppWindow({ appId, onClose }: Props) {
                   width: 26,
                   height: 26,
                   borderRadius: 6,
-                  background: `linear-gradient(145deg, ${def.gradient[0]}, ${def.gradient[1]})`,
+                  background: def.icon
+                    ? "rgba(0,0,0,0.05)"
+                    : `linear-gradient(145deg, ${def.gradient[0]}, ${def.gradient[1]})`,
+                  overflow: "hidden",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -88,7 +89,15 @@ export default function AppWindow({ appId, onClose }: Props) {
                   fontSize: 13,
                 }}
               >
-                {def.glyph ?? def.name.charAt(0)}
+                {def.icon ? (
+                  <img
+                    src={def.icon}
+                    alt=""
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                ) : (
+                  def.name.charAt(0)
+                )}
               </div>
               <span
                 style={{

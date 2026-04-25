@@ -2,12 +2,15 @@
 
 An iPad-style personal website for Jemimah. The whole page renders inside a
 believable tablet chassis with a lock screen, dynamic island, app grid, dock,
-and a small set of placeholder apps (About, Education, Work, Skills, Photos,
-Music, Files, Notes, Calendar, Jemimah GPT, Contact, Settings).
+and a full set of placeholder apps modeled after the iOS-style "iPad personal
+site" pattern: **About** (settings), **Docs** (work/experience), **Ideas**
+(projects), **Education**, **Organizations** (files), **Photos**, **Mail**
+(contact), **Spotify**, **Bible**, **JemimahGPT**, plus external launchers
+(YouTube, GitHub, LinkedIn, Letterboxd, RYM, X, Substack, Calendar).
 
 Every personal-content section is filled with tasteful placeholders. Real
 content is meant to be edited later — either directly in `src/data/content.ts`
-or live, in-session, via the **Settings** app.
+or live, in-session, via the **About** app.
 
 ## Stack
 
@@ -53,16 +56,13 @@ jemimah/
 Two paths:
 
 1. **In code** — open `src/data/content.ts` and replace the `[ ... ]`
-   placeholders. Every section (profile, experience, education, skills,
-   photos, music, files, notes, contact) is plain TypeScript and reloads
-   with HMR.
-2. **In the running app** — open the **Settings** app from the dock.
-   The Profile, Social, Work, Education, Music, and Files sections each
-   expose inline form fields that update the live UI. Edits live in React
-   state for the session only (no persistence by design).
-
-The **Notes** app supports adding, editing, and deleting notes.
-The **Photos** app supports inline caption editing.
+   placeholders. Every section (profile, experience, projects, education,
+   skills, personalSettings, photos, organizations, music, files, contact)
+   is plain TypeScript and reloads with HMR.
+2. **In the running app** — open the **About** app from the home grid.
+   It renders the personal-settings sections and exposes a quick-edit field
+   for your name. Edits live in React state for the session only (no
+   persistence by design).
 
 ## Local development
 

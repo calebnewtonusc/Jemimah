@@ -1,67 +1,133 @@
+// Mirrors Caleb's EducationApp: timeline of schools with details panel.
+import { useState } from "react";
+import { motion } from "framer-motion";
 import { useContent } from "../../data/ContentContext";
 
 export default function EducationApp() {
   const { education } = useContent();
+  const [selectedId, setSelectedId] = useState(education[0]?.id ?? null);
+  const selected = education.find((e) => e.id === selectedId) ?? education[0];
 
   return (
-    <div style={{ padding: 20, color: "#1c1c1e" }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, margin: 0, letterSpacing: -0.4 }}>
-        Education
-      </h1>
-      <p style={{ color: "#8a8a8e", fontSize: 14, marginTop: 4, marginBottom: 24 }}>
-        Schooling, programs, and the big things you've studied.
-      </p>
+    <div style={{ display: "flex", height: "100%", background: "#f2f2f7" }}>
+      <div
+        className="ios-scroll"
+        style={{
+          width: 280,
+          flexShrink: 0,
+          borderRight: "0.5px solid rgba(60,60,67,0.18)",
+          overflowY: "auto",
+          background: "white",
+        }}
+      >
+        <div style={{ padding: "16px 16px 8px" }}>
+          <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: -0.5 }}>
+            Education
+          </div>
+          <div style={{ fontSize: 12, color: "#8a8a8e", marginTop: 2 }}>
+            Schools & programs
+          </div>
+        </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {education.map((e) => (
-          <article
-            key={e.id}
+        {education.map((edu) => (
+          <button
+            key={edu.id}
+            onClick={() => setSelectedId(edu.id)}
             style={{
-              borderRadius: 14,
-              background: "white",
-              padding: 16,
-              boxShadow: "0 1px 0 rgba(0,0,0,0.04), 0 8px 18px rgba(0,0,0,0.05)",
+              display: "block",
+              width: "100%",
+              textAlign: "left",
+              padding: "12px 16px",
+              border: "none",
+              borderTop: "0.5px solid rgba(60,60,67,0.12)",
+              background: edu.id === selected?.id ? "rgba(0,122,255,0.08)" : "transparent",
+              cursor: "pointer",
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <div
-                style={{
-                  width: 42,
-                  height: 42,
-                  borderRadius: 10,
-                  background: e.color ?? "#7a8a9e",
-                  color: "white",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontWeight: 700,
-                  fontSize: 18,
-                }}
-              >
-                {e.school.replace(/[^A-Za-z]/g, "").charAt(0) || "S"}
-              </div>
-              <div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>{e.school}</div>
-                <div style={{ fontSize: 13, color: "#6b6b70" }}>
-                  {e.degree} · {e.period}
-                </div>
-              </div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#1c1c1e" }}>
+              {edu.school}
             </div>
-            <p style={{ marginTop: 12, fontSize: 14, lineHeight: 1.55, color: "#3a3a3c" }}>
-              {e.description}
-            </p>
-            {e.highlights.length > 0 && (
-              <ul style={{ marginTop: 8, paddingLeft: 18, color: "#3a3a3c", fontSize: 14 }}>
-                {e.highlights.map((h, i) => (
-                  <li key={i} style={{ marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: "#6b6b70", marginTop: 2 }}>
+              {edu.degree}
+            </div>
+            <div style={{ fontSize: 11, color: "#8a8a8e", marginTop: 4 }}>
+              {edu.period}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {selected && (
+        <motion.div
+          key={selected.id}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.25 }}
+          className="ios-scroll"
+          style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 4, background: selected.color }} />
+            <div style={{ fontSize: 12, color: "#8a8a8e", letterSpacing: 0.5, textTransform: "uppercase" }}>
+              {selected.status}
+            </div>
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0, letterSpacing: -0.4 }}>
+            {selected.school}
+          </h1>
+          {selected.subtitle && (
+            <div style={{ fontSize: 14, color: "#6b6b70", marginTop: 4 }}>
+              {selected.subtitle}
+            </div>
+          )}
+          <h2 style={{ fontSize: 16, color: "#3a3a3c", marginTop: 6, marginBottom: 8, fontWeight: 500 }}>
+            {selected.degree} · {selected.period}
+          </h2>
+          <p style={{ fontSize: 15, color: "#1c1c1e", lineHeight: 1.55, marginTop: 8 }}>
+            {selected.description}
+          </p>
+
+          {selected.highlights.length > 0 && (
+            <section style={{ marginTop: 18 }}>
+              <h3 style={sectionHead}>Highlights</h3>
+              <ul style={{ paddingLeft: 18, margin: 0 }}>
+                {selected.highlights.map((h, i) => (
+                  <li key={i} style={{ fontSize: 14, color: "#1c1c1e", lineHeight: 1.55, marginBottom: 6 }}>
                     {h}
                   </li>
                 ))}
               </ul>
-            )}
-          </article>
-        ))}
-      </div>
+            </section>
+          )}
+
+          {selected.website && (
+            <a
+              href={selected.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: "inline-block",
+                marginTop: 20,
+                fontSize: 13,
+                color: "#007AFF",
+                textDecoration: "none",
+              }}
+            >
+              Visit website ↗
+            </a>
+          )}
+        </motion.div>
+      )}
     </div>
   );
 }
+
+const sectionHead: React.CSSProperties = {
+  fontSize: 12,
+  fontWeight: 600,
+  letterSpacing: 0.5,
+  textTransform: "uppercase",
+  color: "#8a8a8e",
+  marginBottom: 8,
+  marginTop: 0,
+};

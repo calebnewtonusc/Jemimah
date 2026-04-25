@@ -10,9 +10,12 @@ import {
   profile as defaultProfile,
   social as defaultSocial,
   experience as defaultExperience,
+  projects as defaultProjects,
   education as defaultEducation,
   skills as defaultSkills,
+  personalSettings as defaultPersonalSettings,
   photos as defaultPhotos,
+  organizations as defaultOrganizations,
   music as defaultMusic,
   files as defaultFiles,
   notes as defaultNotes,
@@ -22,9 +25,12 @@ import {
 type Profile = typeof defaultProfile;
 type Social = typeof defaultSocial;
 type Experience = typeof defaultExperience;
+type Projects = typeof defaultProjects;
 type Education = typeof defaultEducation;
 type Skills = typeof defaultSkills;
+type PersonalSettings = typeof defaultPersonalSettings;
 type Photos = typeof defaultPhotos;
+type Organizations = typeof defaultOrganizations;
 type Music = typeof defaultMusic;
 type Files = typeof defaultFiles;
 type Notes = typeof defaultNotes;
@@ -34,9 +40,12 @@ interface ContentState {
   profile: Profile;
   social: Social;
   experience: Experience;
+  projects: Projects;
   education: Education;
   skills: Skills;
+  personalSettings: PersonalSettings;
   photos: Photos;
+  organizations: Organizations;
   music: Music;
   files: Files;
   notes: Notes;
@@ -51,7 +60,6 @@ interface ContentApi extends ContentState {
   removeNote: (id: string) => void;
   setExperience: (id: string, next: Partial<Experience[number]>) => void;
   setEducation: (id: string, next: Partial<Education[number]>) => void;
-  setMusicItem: (id: string, next: Partial<Music[number]>) => void;
   setFile: (id: string, next: Partial<Files[number]>) => void;
   setPhotoCaption: (id: string, caption: string) => void;
   resetAll: () => void;
@@ -63,9 +71,12 @@ const initial: ContentState = {
   profile: defaultProfile,
   social: defaultSocial,
   experience: defaultExperience,
+  projects: defaultProjects,
   education: defaultEducation,
   skills: defaultSkills,
+  personalSettings: defaultPersonalSettings,
   photos: defaultPhotos,
+  organizations: defaultOrganizations,
   music: defaultMusic,
   files: defaultFiles,
   notes: defaultNotes,
@@ -132,16 +143,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const setMusicItem = useCallback(
-    (id: string, next: Partial<Music[number]>) => {
-      setState((s) => ({
-        ...s,
-        music: s.music.map((m) => (m.id === id ? { ...m, ...next } : m)),
-      }));
-    },
-    [],
-  );
-
   const setFile = useCallback((id: string, next: Partial<Files[number]>) => {
     setState((s) => ({
       ...s,
@@ -168,7 +169,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       removeNote,
       setExperience,
       setEducation,
-      setMusicItem,
       setFile,
       setPhotoCaption,
       resetAll,
@@ -182,7 +182,6 @@ export function ContentProvider({ children }: { children: ReactNode }) {
       removeNote,
       setExperience,
       setEducation,
-      setMusicItem,
       setFile,
       setPhotoCaption,
       resetAll,
